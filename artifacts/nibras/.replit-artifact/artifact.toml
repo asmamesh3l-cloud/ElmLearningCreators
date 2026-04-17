@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Nibras - Intelligent Assistant for New Teachers"
+version = "1.0.0"
+id = "artifacts/nibras"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 18839
+
+[services.development]
+run = "pnpm --filter @workspace/nibras run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/nibras", "run", "build" ]
+publicDir = "artifacts/nibras/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "18839"
+BASE_PATH = "/"

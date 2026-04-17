@@ -1,0 +1,490 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: API specification for Nibras - Intelligent Assistant for New Teachers
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: nibras
+    description: Nibras educational assistant operations
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /nibras/generate-lesson:
+    post:
+      operationId: generateLesson
+      tags: [nibras]
+      summary: Generate a lesson plan using Nuha AI engine
+      description: Generates a complete structured lesson plan based on curriculum parameters
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LessonRequest"
+      responses:
+        "200":
+          description: Lesson plan generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LessonResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /nibras/chat:
+    post:
+      operationId: chatWithNuha
+      tags: [nibras]
+      summary: Chat with Nuha AI assistant
+      description: Send a message to the Nuha AI chatbot with lesson context
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChatRequest"
+      responses:
+        "200":
+          description: Chat response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /nibras/rag-context:
+    post:
+      operationId: getRagContext
+      tags: [nibras]
+      summary: Retrieve RAG context for a lesson
+      description: Simulates retrieval from Ain portal, Madrasati, and Ministry of Education sources
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RagRequest"
+      responses:
+        "200":
+          description: RAG context retrieved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RagResponse"
+
+  /nibras/curriculum-options:
+    get:
+      operationId: getCurriculumOptions
+      tags: [nibras]
+      summary: Get curriculum dropdown options
+      description: Returns available stages, grades, subjects, and lesson titles
+      responses:
+        "200":
+          description: Curriculum options
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CurriculumOptions"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    LessonRequest:
+      type: object
+      properties:
+        teacherName:
+          type: string
+          description: Name of the teacher
+        stage:
+          type: string
+          description: Educational stage (Primary, Middle, High)
+        grade:
+          type: string
+          description: Grade level
+        subject:
+          type: string
+          description: Subject name
+        lessonTitle:
+          type: string
+          description: Title of the lesson
+        duration:
+          type: number
+          description: Lesson duration in minutes (default 45)
+        learningOutcomes:
+          type: string
+          description: Expected learning outcomes for the lesson
+        studentLevel:
+          type: string
+          enum: [مبتدئ, متوسط, متقدم, مختلط]
+          description: Overall level of students in the class
+        classNature:
+          type: string
+          description: Nature or description of the class
+        learningNeeds:
+          type: string
+          description: Special learning needs or accommodations (optional)
+      required:
+        - teacherName
+        - stage
+        - grade
+        - subject
+        - lessonTitle
+
+    LessonResponse:
+      type: object
+      properties:
+        lessonPlan:
+          $ref: "#/components/schemas/LessonPlan"
+        ragSources:
+          type: array
+          items:
+            type: string
+          description: Sources used for RAG context
+        generatedAt:
+          type: string
+          description: ISO timestamp of generation
+      required:
+        - lessonPlan
+        - ragSources
+        - generatedAt
+
+    LessonPlan:
+      type: object
+      properties:
+        title:
+          type: string
+        stage:
+          type: string
+        grade:
+          type: string
+        subject:
+          type: string
+        duration:
+          type: number
+        objectives:
+          type: array
+          items:
+            type: string
+          description: Behavioral/procedural objectives
+        timeDistribution:
+          $ref: "#/components/schemas/TimeDistribution"
+        strategies:
+          type: array
+          items:
+            type: string
+          description: Active learning strategies
+        introduction:
+          type: string
+        mainContent:
+          type: string
+        activities:
+          type: array
+          items:
+            $ref: "#/components/schemas/Activity"
+        assessment:
+          type: string
+        closure:
+          type: string
+        materials:
+          type: array
+          items:
+            type: string
+        differentiatedInstructions:
+          $ref: "#/components/schemas/DifferentiatedInstructions"
+        homework:
+          type: string
+        madrasatiHomework:
+          type: string
+      required:
+        - title
+        - stage
+        - grade
+        - subject
+        - duration
+        - objectives
+        - timeDistribution
+        - strategies
+        - introduction
+        - mainContent
+        - activities
+        - assessment
+        - closure
+        - materials
+        - differentiatedInstructions
+
+    TimeDistribution:
+      type: object
+      properties:
+        introduction:
+          type: number
+          description: Minutes for introduction
+        explanation:
+          type: number
+          description: Minutes for explanation
+        activity:
+          type: number
+          description: Minutes for activities
+        assessment:
+          type: number
+          description: Minutes for assessment
+      required:
+        - introduction
+        - explanation
+        - activity
+        - assessment
+
+    Activity:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        duration:
+          type: number
+        type:
+          type: string
+          enum: [individual, group, discussion, practical, digital]
+      required:
+        - name
+        - description
+        - duration
+        - type
+
+    DifferentiatedInstructions:
+      type: object
+      properties:
+        advanced:
+          type: string
+          description: Instructions for advanced students
+        average:
+          type: string
+          description: Instructions for average students
+        needsSupport:
+          type: string
+          description: Instructions for students needing support
+      required:
+        - advanced
+        - average
+        - needsSupport
+
+    ChatRequest:
+      type: object
+      properties:
+        message:
+          type: string
+          description: User message
+        lessonContext:
+          $ref: "#/components/schemas/LessonPlan"
+        history:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChatMessage"
+      required:
+        - message
+
+    LessonPlanPatch:
+      type: object
+      description: Partial lesson plan fields that can be patched by the chatbot
+      properties:
+        title:
+          type: string
+        objectives:
+          type: array
+          items:
+            type: string
+        introduction:
+          type: string
+        mainContent:
+          type: string
+        activities:
+          type: array
+          items:
+            $ref: "#/components/schemas/Activity"
+        assessment:
+          type: string
+        closure:
+          type: string
+        materials:
+          type: array
+          items:
+            type: string
+        strategies:
+          type: array
+          items:
+            type: string
+        differentiatedInstructions:
+          $ref: "#/components/schemas/DifferentiatedInstructions"
+        homework:
+          type: string
+        madrasatiHomework:
+          type: string
+
+    ChatResponse:
+      type: object
+      properties:
+        reply:
+          type: string
+          description: AI response
+        ragSources:
+          type: array
+          items:
+            type: string
+          description: RAG sources used to enrich the response
+        lessonPatch:
+          $ref: "#/components/schemas/LessonPlanPatch"
+          description: Partial lesson plan patch to apply when Nuha modifies the plan
+        timestamp:
+          type: string
+      required:
+        - reply
+        - timestamp
+
+    ChatMessage:
+      type: object
+      properties:
+        role:
+          type: string
+          enum: [user, assistant]
+        content:
+          type: string
+      required:
+        - role
+        - content
+
+    RagRequest:
+      type: object
+      properties:
+        subject:
+          type: string
+        lessonTitle:
+          type: string
+        stage:
+          type: string
+        grade:
+          type: string
+      required:
+        - subject
+        - lessonTitle
+
+    RagResponse:
+      type: object
+      properties:
+        sources:
+          type: array
+          items:
+            type: string
+        context:
+          type: string
+        retrievedAt:
+          type: string
+      required:
+        - sources
+        - context
+        - retrievedAt
+
+    CurriculumOptions:
+      type: object
+      properties:
+        stages:
+          type: array
+          items:
+            $ref: "#/components/schemas/Stage"
+      required:
+        - stages
+
+    Stage:
+      type: object
+      properties:
+        name:
+          type: string
+        grades:
+          type: array
+          items:
+            $ref: "#/components/schemas/Grade"
+      required:
+        - name
+        - grades
+
+    Grade:
+      type: object
+      properties:
+        name:
+          type: string
+        subjects:
+          type: array
+          items:
+            $ref: "#/components/schemas/Subject"
+      required:
+        - name
+        - subjects
+
+    Subject:
+      type: object
+      properties:
+        name:
+          type: string
+        lessons:
+          type: array
+          items:
+            type: string
+      required:
+        - name
+        - lessons
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+      required:
+        - error
+        - message
